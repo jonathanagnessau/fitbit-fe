@@ -36,7 +36,7 @@
             margin-top: 10px;
         }
 
-        input {
+        input, select {
             padding: 8px;
             margin-top: 5px;
             margin-bottom: 15px;
@@ -61,14 +61,30 @@
             margin-top: 15px;
             text-align: center;
         }
+
+        .login-button {
+            background-color: #0073e6;
+        }
+
+        .login-button:hover {
+            background-color: #005bb5;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Enter Meal Information</h1>
-        <form id="mealForm">
+        <div id="loginSection">
+            <button class="login-button" id="loginButton">Login with Fitbit</button>
+        </div>
+        <form id="mealForm" style="display:none;">
             <label for="mealName">Meal Name</label>
-            <input type="text" id="mealName" name="mealName" required>
+            <select id="mealName" name="mealName">
+                <option value="meal_1">Meal 1</option>
+                <option value="meal_2">Meal 2</option>
+                <option value="meal_3">Meal 3</option>
+                <option value="meal_4">Meal 4</option>
+            </select>
 
             <label for="mealType">Meal Type</label>
             <input type="text" id="mealType" name="mealType" required>
@@ -82,6 +98,34 @@
     </div>
 
     <script>
+        const clientId = '23PZP6';  // Replace with your actual Fitbit Client ID
+        const redirectUri = 'http://localhost:5500'; // Replace with the URL of your app's callback endpoint
+        let accessToken = localStorage.getItem('access_token');
+
+        // Login to Fitbit using OAuth2
+        document.getElementById('loginButton').addEventListener('click', () => {
+            const authUrl = `https://www.fitbit.com/oauth2/authorize?response_type=token&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=activity%20food&expires_in=86400`;
+            window.location.href = authUrl;
+        });
+
+        // This function will run when the user is redirected back to your site
+        function getAccessTokenFromUrl() {
+            const params = new URLSearchParams(window.location.hash.substring(1));
+            const token = params.get('access_token');
+            if (token) {
+                localStorage.setItem('access_token', token);
+                accessToken = token;
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('mealForm').style.display = 'block';
+            }
+        }
+
+        // Check if access token exists in URL params
+        if (window.location.hash) {
+            getAccessTokenFromUrl();
+        }
+
+        // Handle meal submission
         document.getElementById('mealForm').addEventListener('submit', async function(event) {
             event.preventDefault();
 
@@ -89,18 +133,14 @@
             const mealType = document.getElementById('mealType').value;
             const calories = document.getElementById('calories').value;
 
-            // Get the access token (this would normally be securely retrieved from your backend)
-            let accessToken = localStorage.getItem('access_token');
             if (!accessToken) {
                 document.getElementById('responseMessage').textContent = 'Please login to Fitbit first!';
                 return;
             }
 
             try {
-                // Send the meal data to the Fitbit API
                 const response = await sendMealData(mealName, mealType, calories, accessToken);
                 if (response.error === 'invalid_token') {
-                    // If the token is invalid, refresh it
                     accessToken = await refreshAccessToken();
                     if (accessToken) {
                         localStorage.setItem('access_token', accessToken);
@@ -136,17 +176,23 @@
             return await response.json();
         }
 
-        // Function to refresh access token (you need to implement the server-side token refresh logic)
+        // Function to refresh access token
         async function refreshAccessToken() {
-            const response = await fetch('/refresh-token', {
-                method: 'POST',
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                return data.access_token; // assuming the new token is returned in this format
+            const refreshToken = localStorage.getItem('refresh_token');
+            if (!refreshToken) {
+                return null;
             }
 
+            const response = await fetch('/refresh-token', {
+                method: 'POST',
+                body: JSON.stringify({ refresh_token: refreshToken }),
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            const data = await response.json();
+            if (data.access_token) {
+                return data.access_token;
+            }
             return null;
         }
     </script>
