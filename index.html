@@ -78,7 +78,7 @@
             <button class="login-button" id="loginButton">Login with Fitbit</button>
         </div>
         <form id="mealForm" style="display:none;">
-            <label for="mealName">Meal Name</label>
+            <label for="mealName">Meal</label>
             <select id="mealName" name="mealName">
                 <option value="meal_1">Meal 1</option>
                 <option value="meal_2">Meal 2</option>
@@ -101,6 +101,7 @@
         const clientId = '23PZP6';  // Replace with your actual Fitbit Client ID
         const redirectUri = 'https://fitbit-oauth-project.onrender.com/callback'; // Replace with the URL of your app's callback endpoint
         let accessToken = localStorage.getItem('access_token');
+        let refreshToken = localStorage.getItem('refresh_token');
 
         // Login to Fitbit using OAuth2
         document.getElementById('loginButton').addEventListener('click', () => {
@@ -112,9 +113,12 @@
         function getAccessTokenFromUrl() {
             const params = new URLSearchParams(window.location.hash.substring(1));
             const token = params.get('access_token');
-            if (token) {
+            const refresh = params.get('refresh_token');
+            if (token && refresh) {
                 localStorage.setItem('access_token', token);
+                localStorage.setItem('refresh_token', refresh);
                 accessToken = token;
+                refreshToken = refresh;
                 document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('mealForm').style.display = 'block';
             }
@@ -178,11 +182,6 @@
 
         // Function to refresh access token
         async function refreshAccessToken() {
-            const refreshToken = localStorage.getItem('refresh_token');
-            if (!refreshToken) {
-                return null;
-            }
-
             const response = await fetch('/refresh-token', {
                 method: 'POST',
                 body: JSON.stringify({ refresh_token: refreshToken }),
