@@ -104,7 +104,7 @@
 
         // Login to Fitbit using OAuth2
         document.getElementById('loginButton').addEventListener('click', () => {
-            const authUrl = `https://www.fitbit.com/oauth2/authorize?response_type=token&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=activity%20food&expires_in=86400`;
+                const authUrl = `https://www.fitbit.com/oauth2/authorize?response_type=token&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=nutrition&expires_in=86400`;
             window.location.href = authUrl;
         });
 
