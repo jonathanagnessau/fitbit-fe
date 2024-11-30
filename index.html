@@ -80,10 +80,10 @@
         <form id="mealForm" style="display:none;">
             <label for="mealName">Meal</label>
             <select id="mealName" name="mealName">
-                <option value="meal_1">Meal 1</option>
-                <option value="meal_2">Meal 2</option>
-                <option value="meal_3">Meal 3</option>
-                <option value="meal_4">Meal 4</option>
+                <option value="meal_1">Breakfast</option>
+                <option value="meal_2">Lunch</option>
+                <option value="meal_3">Dinner</option>
+                <option value="meal_4">Snack</option>
             </select>
 
             <label for="mealType">Meal Type</label>
@@ -99,13 +99,13 @@
 
     <script>
         const clientId = '23PZP6';  // Replace with your actual Fitbit Client ID
-        const redirectUri = 'https://fitbit-oauth-project.onrender.com/callback'; // Replace with the URL of your app's callback endpoint
+        const redirectUri = 'https://fitbit-oauth-project.onrender.com/callback'; // Replace with your app's callback URL
         let accessToken = localStorage.getItem('access_token');
         let refreshToken = localStorage.getItem('refresh_token');
 
         // Login to Fitbit using OAuth2
         document.getElementById('loginButton').addEventListener('click', () => {
-                const authUrl = `https://www.fitbit.com/oauth2/authorize?response_type=token&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=nutrition&expires_in=86400`;
+            const authUrl = `https://www.fitbit.com/oauth2/authorize?response_type=token&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=nutrition&expires_in=86400`;
             window.location.href = authUrl;
         });
 
@@ -162,6 +162,13 @@
 
         // Function to send meal data to Fitbit API
         async function sendMealData(mealName, mealType, calories, accessToken) {
+            const fitbitMealTypes = {
+                'meal_1': 'breakfast',
+                'meal_2': 'lunch',
+                'meal_3': 'dinner',
+                'meal_4': 'snack'
+            };
+
             const response = await fetch('https://api.fitbit.com/1/user/-/foods/log.json', {
                 method: 'POST',
                 headers: {
@@ -171,7 +178,7 @@
                 body: JSON.stringify({
                     food: {
                         name: mealName,
-                        meal_type: mealType,
+                        meal_type: fitbitMealTypes[mealName],
                         calories: calories,
                     },
                 }),
